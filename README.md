@@ -4,8 +4,13 @@ Nowoczesny, lekki i skalowalny gateway do odczytu danych ze sterowników Siemens
 
 ## 🚀 Kluczowe Funkcje
 - **Obsługa wielu PLC:** Równoległy odczyt z wielu sterowników dzięki architekturze wielowątkowej.
+- **Wsparcie dla adapterów MPI/DP:** Możliwość łączenia się ze starszymi sterownikami (S7-300/400) poprzez adaptery Ethernet-to-MPI/DP (np. NetLink, IBH Link).
 - **Interfejs Webowy:** Nowoczesny dashboard w React do konfiguracji (CRUD) i podglądu danych "live".
 - **Dynamiczna Konfiguracja:** Dodawanie i edycja sterowników oraz definiowanie zmiennych (DB) z poziomu UI bez restartu aplikacji.
+
+### 💡 Ważna uwaga dot. konfiguracji:
+Dla sterowników **S7-1200/1500** zazwyczaj używamy **Slot 1**.
+Dla starszych sterowników **S7-300/400** (w tym tych za adapterami MPI/DP) zazwyczaj należy ustawić **Slot 2**.
 - **Import CSV:** Szybkie definiowanie tagów poprzez import plików CSV.
 - **Dystrybucja danych:** Publikacja wartości w czasie rzeczywistym do brokera MQTT (IIoT Ready).
 - **Bezpieczeństwo:** System logowania oparty na JWT (JSON Web Tokens).

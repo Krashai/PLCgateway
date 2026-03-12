@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 import type { PLC } from '../api';
 import PLCCard from './PLCCard';
-import AddPLCModal from './AddPLCModal';
+import PLCModal from './PLCModal';
 import { usePLCWebsocket } from '../hooks/useWebsocket';
 import { Plus, LayoutDashboard } from 'lucide-react';
 
@@ -10,6 +10,7 @@ const Dashboard: React.FC = () => {
   const [plcs, setPlcs] = useState<PLC[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPLC, setSelectedPLC] = useState<PLC | null>(null);
 
   // Pobieranie początkowych danych
   const fetchPlcs = async () => {
@@ -45,6 +46,21 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleEdit = (plc: PLC) => {
+    setSelectedPLC(plc);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedPLC(null);
+  };
+
+  const handleAddClick = () => {
+    setSelectedPLC(null);
+    setIsModalOpen(true);
+  };
+
   if (loading) return <div className="text-center mt-20">Ładowanie konfiguracji...</div>;
 
   return (
@@ -52,7 +68,7 @@ const Dashboard: React.FC = () => {
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-2xl font-bold text-gray-800">Twoje Sterowniki PLC</h2>
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleAddClick}
           className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg hover:shadow-green-500/40 hover:scale-105 active:scale-95 font-semibold"
         >
           <Plus size={20} />
@@ -60,10 +76,11 @@ const Dashboard: React.FC = () => {
         </button>
       </div>
 
-      <AddPLCModal 
+      <PLCModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onSuccess={fetchPlcs} 
+        onClose={handleCloseModal} 
+        onSuccess={fetchPlcs}
+        initialData={selectedPLC}
       />
 
       {plcs.length === 0 ? (
@@ -76,7 +93,7 @@ const Dashboard: React.FC = () => {
             Zacznij od dodania swojego pierwszego sterownika PLC, aby monitorować dane w czasie rzeczywistym.
           </p>
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleAddClick}
             className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-lg flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg hover:shadow-green-500/40 hover:scale-105 active:scale-95 font-semibold"
           >
             <Plus size={20} />
@@ -86,7 +103,7 @@ const Dashboard: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {plcs.map(plc => (
-            <PLCCard key={plc.id} plc={plc} onDelete={handleDelete} />
+            <PLCCard key={plc.id} plc={plc} onDelete={handleDelete} onEdit={handleEdit} />
           ))}
         </div>
       )}

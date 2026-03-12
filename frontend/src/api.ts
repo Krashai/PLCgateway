@@ -35,6 +35,7 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 });
 
 export const createPLC = (plc: Omit<PLC, 'online'>) => api.post('/plcs', plc);
+export const updatePLC = (id: string, plc: Omit<PLC, 'online'>) => api.put(`/plcs/${id}`, plc);
 export const deletePLC = (id: string) => api.delete(`/plcs/${id}`);
 export const getPLCs = () => api.get<PLC[]>('/plcs');
 

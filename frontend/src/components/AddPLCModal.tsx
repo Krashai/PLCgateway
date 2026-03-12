@@ -29,7 +29,7 @@ const AddPLCModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => {
     setTags(tags.filter((_, i) => i !== index));
   };
 
-  const updateTag = (index: number, field: keyof Tag, value: any) => {
+  const updateTag = (index: number, field: keyof Tag, value: string | number | boolean) => {
     const newTags = [...tags];
     newTags[index] = { ...newTags[index], [field]: value };
     setTags(newTags);
@@ -62,7 +62,7 @@ const AddPLCModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => {
           name: tagName,
           db: parseInt(db),
           offset: parseInt(offset),
-          type: type as any
+          type: type as Tag['type']
         });
       }
       setTags([...tags, ...newTags]);
@@ -88,8 +88,9 @@ const AddPLCModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => {
       await createPLC({ id, name, ip, type, rack, slot, tags });
       onSuccess();
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Błąd zapisu sterownika');
+    } catch (err: unknown) {
+      const errorMsg = (err as { response?: { data?: { detail?: string } } }).response?.data?.detail || 'Błąd zapisu sterownika';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

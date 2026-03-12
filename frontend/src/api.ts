@@ -1,7 +1,6 @@
 import axios, { InternalAxiosRequestConfig } from 'axios';
 
-// @ts-ignore - Vite define env on import.meta
-const API_URL = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = (import.meta as unknown as { env: Record<string, string | undefined> }).env.VITE_API_URL || 'http://localhost:8000';
 
 export interface Tag {
   name: string;

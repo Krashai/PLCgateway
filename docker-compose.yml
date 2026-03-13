@@ -4,11 +4,12 @@ services:
   mqtt:
     image: eclipse-mosquitto:latest
     ports:
-      - "1883:1883"
-      - "9001:9001"
+      - "10.10.0.244:1883:1883"
+      - "10.10.0.244:9001:9001"
     volumes:
       - mqtt_data:/mosquitto/data
       - mqtt_log:/mosquitto/log
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
     networks:
       - gateway_net
 
@@ -26,7 +27,7 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "3000:80"
+      - "10.10.0.244:3000:80"
     depends_on:
       - backend
     networks:

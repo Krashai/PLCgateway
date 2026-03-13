@@ -14,17 +14,14 @@ services:
 
   backend:
     build: ./backend
-    ports:
-      - "8000:8000"
+    network_mode: host
     volumes:
       - ./backend/config:/app/backend/config
     environment:
-      - MQTT_BROKER=mqtt
+      - MQTT_BROKER=127.0.0.1
       - MQTT_PORT=1883
     depends_on:
       - mqtt
-    networks:
-      - gateway_net
 
   frontend:
     build: ./frontend

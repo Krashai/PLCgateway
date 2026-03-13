@@ -27,9 +27,12 @@ class PLCWorker(threading.Thread):
                 else:
                     self.client.set_param(snap7.types.RemotePort, 102)
                 
+                print(f"DEBUG: Proba polaczenia z IP={self.config.ip}, Rack={self.config.rack}, Slot={self.config.slot}", flush=True)
                 self.client.connect(self.config.ip, self.config.rack, self.config.slot)
                 self.config.online = True
-            except Exception:
+                print(f"SUCCESS: Polaczono z {self.config.ip}", flush=True)
+            except Exception as e:
+                print(f"ERROR: Brak polaczenia z {self.config.ip}: {e}", flush=True)
                 self.config.online = False
                 return False
         return True

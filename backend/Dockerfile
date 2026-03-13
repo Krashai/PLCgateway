@@ -19,21 +19,29 @@ FROM python:3.11-slim
 # Copy the compiled library
 COPY --from=builder /build/*/bin/x86_64-linux/libsnap7.so /usr/lib/libsnap7.so
 
-# Security: Create non-root user
-RUN addgroup --system appgroup && adduser --system --group appuser
+# Konfiguracja użytkownika z konkretnym UID/GID (standard 1000 dla Linux)
+RUN addgroup --gid 1000 appgroup && \
+    adduser --uid 1000 --ingroup appgroup --system --disabled-password --no-create-home appuser
 
 WORKDIR /app
 
-# Install dependencies
+# Przygotowanie struktury katalogów
+RUN mkdir -p /app/backend/config && chown -R appuser:appgroup /app
+
+# Instalacja zależności
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Kopiowanie kodu aplikacji
+COPY --chown=appuser:appgroup . .
 
-# Adjust permissions
-RUN chown -R appuser:appgroup /app
+# Zapewnienie, że folder config jest zapisywalny dla appuser
+RUN chmod -R 775 /app/backend/config
+
 USER appuser
+
+# Wyłączenie buforowania wyjścia Pythona
+ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 

@@ -27,6 +27,12 @@ def load_settings() -> GlobalSettings:
 def save_settings(settings: GlobalSettings):
     """Zapisuje aktualne ustawienia do pliku JSON."""
     path = Path(CONFIG_PATH)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w") as f:
-        json.dump(settings.model_dump(), f, indent=4)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w") as f:
+            json.dump(settings.model_dump(), f, indent=4)
+        print(f"Zapisano ustawienia do {path}")
+    except PermissionError:
+        print(f"BLAD KRYTYCZNY: Brak uprawnien do zapisu w {path}. Zmiany nie zostana utrwalone!")
+    except Exception as e:
+        print(f"Blad podczas zapisu ustawień: {e}")

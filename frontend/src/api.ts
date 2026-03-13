@@ -1,6 +1,6 @@
 import axios, { InternalAxiosRequestConfig } from 'axios';
 
-const API_URL = (import.meta as unknown as { env: Record<string, string | undefined> }).env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = (import.meta as unknown as { env: Record<string, string | undefined> }).env.VITE_API_URL || `http://${window.location.hostname}:8000`;
 
 export interface Tag {
   name: string;

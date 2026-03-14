@@ -11,18 +11,31 @@ def load_settings() -> GlobalSettings:
     """Wczytuje ustawienia z pliku JSON lub zwraca domyślne."""
     path = Path(CONFIG_PATH)
     
-    if not path.exists():
+    settings = GlobalSettings()
+    if path.exists():
+        try:
+            with open(path, "r") as f:
+                data = json.load(f)
+                settings = GlobalSettings(**data)
+        except Exception as e:
+            print(f"Błąd podczas wczytywania ustawień: {e}")
+    else:
         # Próbujemy stworzyć folder jeśli nie istnieje
         path.parent.mkdir(parents=True, exist_ok=True)
-        return GlobalSettings()
+
+    # Nadpisujemy zmiennymi środowiskowymi jeśli obecne
+    env_broker = os.getenv("MQTT_BROKER")
+    if env_broker:
+        settings.mqtt_broker = env_broker
     
-    try:
-        with open(path, "r") as f:
-            data = json.load(f)
-            return GlobalSettings(**data)
-    except Exception as e:
-        print(f"Błąd podczas wczytywania ustawień: {e}")
-        return GlobalSettings()
+    env_port = os.getenv("MQTT_PORT")
+    if env_port:
+        try:
+            settings.mqtt_port = int(env_port)
+        except ValueError:
+            pass
+
+    return settings
 
 def save_settings(settings: GlobalSettings):
     """Zapisuje aktualne ustawienia do pliku JSON."""

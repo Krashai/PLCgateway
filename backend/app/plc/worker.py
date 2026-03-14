@@ -59,7 +59,8 @@ class PLCWorker(threading.Thread):
                                 self.publish_to_mqtt(tag)
                     
                     self.config.online = True
-                except Exception:
+                except Exception as e:
+                    print(f"ERROR: Wyjątek podczas odczytu {self.config.ip}: {e}", flush=True)
                     self.config.online = False
                     self.client.disconnect()
             

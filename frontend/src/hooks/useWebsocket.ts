@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import type { PLC } from '../api';
 
-const WS_URL = (import.meta as unknown as { env: Record<string, string | undefined> }).env.VITE_WS_URL || 'ws://localhost:8000/ws';
+const WS_URL = (import.meta as unknown as { env: Record<string, string | undefined> }).env.VITE_WS_URL || `ws://${window.location.hostname}:8000/ws`;
 
 export const usePLCWebsocket = (onUpdate: (data: PLC) => void) => {
   useEffect(() => {

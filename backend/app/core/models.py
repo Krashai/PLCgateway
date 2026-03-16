@@ -5,6 +5,7 @@ class Tag(BaseModel):
     name: str
     db: int
     offset: int
+    bit: int = Field(default=0, ge=0, le=7)
     type: str  # REAL, INT, BOOL, DINT, STRING
     value: Optional[float | int | bool | str] = None
 

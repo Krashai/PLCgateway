@@ -51,7 +51,7 @@ const PLCModal: React.FC<Props> = ({ isOpen, onClose, onSuccess, initialData }) 
   if (!isOpen) return null;
 
   const addTag = () => {
-    setTags([...tags, { name: '', db: 1, offset: 0, type: 'REAL' }]);
+    setTags([...tags, { name: '', db: 1, offset: 0, bit: 0, type: 'REAL' }]);
   };
 
   const applyPreset = (presetTags: Omit<Tag, 'value'>[]) => {
@@ -96,7 +96,21 @@ const PLCModal: React.FC<Props> = ({ isOpen, onClose, onSuccess, initialData }) 
       const currentTagNames = new Set(tags.map(t => t.name));
 
       for (const row of dataRows) {
-        const [tagName, db, offset, type] = row.split(',').map(s => s.trim());
+        const parts = row.split(',').map(s => s.trim());
+        // Obsługa starego formatu (4 elementy) i nowego z bitem (5 elementów)
+        const tagName = parts[0];
+        const db = parts[1];
+        const offset = parts[2];
+        let bit = '0';
+        let type = '';
+
+        if (parts.length >= 5) {
+          bit = parts[3];
+          type = parts[4];
+        } else {
+          type = parts[3];
+        }
+
         if (!tagName || isNaN(parseInt(db)) || isNaN(parseInt(offset)) || !type) continue;
         
         if (currentTagNames.has(tagName)) {
@@ -104,12 +118,19 @@ const PLCModal: React.FC<Props> = ({ isOpen, onClose, onSuccess, initialData }) 
            return;
         }
         currentTagNames.add(tagName);
-        newTags.push({
+        
+        const newTag: Tag = {
           name: tagName,
           db: parseInt(db),
           offset: parseInt(offset),
           type: type as Tag['type']
-        });
+        };
+
+        if (type === 'BOOL') {
+          newTag.bit = parseInt(bit) || 0;
+        }
+
+        newTags.push(newTag);
       }
       setTags([...tags, ...newTags]);
       setError('');
@@ -360,7 +381,7 @@ const PLCModal: React.FC<Props> = ({ isOpen, onClose, onSuccess, initialData }) 
                       'bg-purple-500'
                     }`} />
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                      <div className="md:col-span-4 space-y-1">
+                      <div className="md:col-span-3 space-y-1">
                         <label className="text-[10px] font-bold text-gray-700 uppercase tracking-widest ml-1">Nazwa Tagu</label>
                         <input
                           type="text"
@@ -388,19 +409,53 @@ const PLCModal: React.FC<Props> = ({ isOpen, onClose, onSuccess, initialData }) 
                           className="w-full px-3 py-2 text-sm bg-gray-50 border border-transparent rounded-xl outline-none focus:bg-white focus:border-blue-500 transition-all text-gray-900"
                         />
                       </div>
-                      <div className="md:col-span-3 space-y-1">
-                        <label className="text-[10px] font-bold text-gray-700 uppercase tracking-widest ml-1">Typ Danych</label>
-                        <select
-                          value={tag.type}
-                          onChange={(e) => updateTag(index, 'type', e.target.value)}
-                          className="w-full px-3 py-2 text-sm bg-gray-50 border border-transparent rounded-xl outline-none focus:bg-white focus:border-blue-500 transition-all appearance-none text-gray-900"
-                        >
-                          <option value="REAL">REAL (Float)</option>
-                          <option value="INT">INT (Integer)</option>
-                          <option value="BOOL">BOOL (Boolean)</option>
-                          <option value="DINT">DINT (Double)</option>
-                        </select>
-                      </div>
+                      {tag.type === 'BOOL' ? (
+                        <>
+                          <div className="md:col-span-1 space-y-1">
+                            <label className="text-[10px] font-bold text-gray-700 uppercase tracking-widest ml-1">Bit</label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="7"
+                              value={tag.bit ?? 0}
+                              onChange={(e) => updateTag(index, 'bit', parseInt(e.target.value) || 0)}
+                              className="w-full px-3 py-2 text-sm bg-gray-50 border border-transparent rounded-xl outline-none focus:bg-white focus:border-blue-500 transition-all text-gray-900"
+                            />
+                          </div>
+                          <div className="md:col-span-3 space-y-1">
+                            <label className="text-[10px] font-bold text-gray-700 uppercase tracking-widest ml-1">Typ Danych</label>
+                            <select
+                              value={tag.type}
+                              onChange={(e) => {
+                                updateTag(index, 'type', e.target.value);
+                                if (e.target.value !== 'BOOL') {
+                                  updateTag(index, 'bit', 0);
+                                }
+                              }}
+                              className="w-full px-3 py-2 text-sm bg-gray-50 border border-transparent rounded-xl outline-none focus:bg-white focus:border-blue-500 transition-all appearance-none text-gray-900"
+                            >
+                              <option value="REAL">REAL (Float)</option>
+                              <option value="INT">INT (Integer)</option>
+                              <option value="BOOL">BOOL (Boolean)</option>
+                              <option value="DINT">DINT (Double)</option>
+                            </select>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="md:col-span-4 space-y-1">
+                          <label className="text-[10px] font-bold text-gray-700 uppercase tracking-widest ml-1">Typ Danych</label>
+                          <select
+                            value={tag.type}
+                            onChange={(e) => updateTag(index, 'type', e.target.value)}
+                            className="w-full px-3 py-2 text-sm bg-gray-50 border border-transparent rounded-xl outline-none focus:bg-white focus:border-blue-500 transition-all appearance-none text-gray-900"
+                          >
+                            <option value="REAL">REAL (Float)</option>
+                            <option value="INT">INT (Integer)</option>
+                            <option value="BOOL">BOOL (Boolean)</option>
+                            <option value="DINT">DINT (Double)</option>
+                          </select>
+                        </div>
+                      )}
                       <div className="md:col-span-1 flex justify-end pt-5">
                         <button
                           type="button"

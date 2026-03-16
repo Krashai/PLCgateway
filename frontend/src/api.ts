@@ -6,6 +6,7 @@ export interface Tag {
   name: string;
   db: number;
   offset: number;
+  bit?: number;
   type: string;
   value?: string | number | boolean;
 }

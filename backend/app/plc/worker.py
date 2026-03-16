@@ -54,7 +54,8 @@ class PLCWorker(threading.Thread):
                         raw_data = self.client.db_read(db_num, 0, max_offset)
 
                         for tag in tags:
-                            val = decode_tag_value(raw_data, tag.offset, tag.type)
+                            bit_val = getattr(tag, 'bit', 0)
+                            val = decode_tag_value(raw_data, tag.offset, tag.type, bit_val)
                             if val is not None:
                                 # Mechanizm publish-on-change
                                 if val != self.last_values.get(tag.name):

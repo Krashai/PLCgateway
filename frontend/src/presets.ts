@@ -11,7 +11,7 @@ export const PLC_PRESETS: TagPreset[] = [
     name: 'Standardowe Monitorowanie Linii',
     description: 'Podstawowe sygnały dla dashboardu: Status (Praca/Postój), Prędkość (Wydajność) oraz Odpady (Scrap).',
     tags: [
-      { name: 'status', db: 1, offset: 0, type: 'BOOL' },
+      { name: 'status', db: 1, offset: 0, bit: 0, type: 'BOOL' },
       { name: 'speed', db: 1, offset: 2, type: 'REAL' },
       { name: 'scrap', db: 1, offset: 6, type: 'INT' },
     ],
@@ -28,7 +28,7 @@ export const PLC_PRESETS: TagPreset[] = [
     name: 'Diagnostyka Stanu',
     description: 'Tylko sygnał statusu pracy maszyny.',
     tags: [
-      { name: 'status', db: 1, offset: 0, type: 'BOOL' },
+      { name: 'status', db: 1, offset: 0, bit: 0, type: 'BOOL' },
     ],
   }
 ];

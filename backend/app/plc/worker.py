@@ -16,6 +16,7 @@ class PLCWorker(threading.Thread):
         self.poll_rate = poll_rate
         self.running = True
         self.client = snap7.client.Client()
+        self.last_values = {}  # Cache dla mechanizmu publish-on-change
 
     def connect(self):
         """Próba połączenia ze sterownikiem PLC."""
@@ -55,8 +56,13 @@ class PLCWorker(threading.Thread):
                         for tag in tags:
                             val = decode_tag_value(raw_data, tag.offset, tag.type)
                             if val is not None:
-                                tag.value = val
-                                self.publish_to_mqtt(tag)
+                                # Mechanizm publish-on-change
+                                if val != self.last_values.get(tag.name):
+                                    tag.value = val
+                                    self.publish_to_mqtt(tag)
+                                    self.last_values[tag.name] = val
+                                else:
+                                    tag.value = val
                     
                     self.config.online = True
                 except Exception as e:
@@ -73,7 +79,7 @@ class PLCWorker(threading.Thread):
             time.sleep(sleep_time)
 
     def publish_to_mqtt(self, tag):
-        topic = f"plc/gate/data/{self.config.id}/{tag.name}"
+        topic = f"lines/{self.config.id}/{tag.name}"
         self.mqtt_client.publish(topic, str(tag.value))
 
     def broadcast_update(self):

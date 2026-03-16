@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Upload, AlertCircle, Fingerprint, Network, Cpu, Layers, Settings, CheckCircle2 } from 'lucide-react';
+import { X, Plus, Trash2, Upload, AlertCircle, Fingerprint, Network, Cpu, Layers, Settings, CheckCircle2, Wand2 } from 'lucide-react';
 import { createPLC, updatePLC, Tag, PLC } from '../api';
+import { PLC_PRESETS } from '../presets';
 
 interface Props {
   isOpen: boolean;
@@ -20,6 +21,7 @@ const PLCModal: React.FC<Props> = ({ isOpen, onClose, onSuccess, initialData }) 
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPresets, setShowPresets] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -42,6 +44,7 @@ const PLCModal: React.FC<Props> = ({ isOpen, onClose, onSuccess, initialData }) 
       }
       setError('');
       setSuccessMsg('');
+      setShowPresets(false);
     }
   }, [initialData, isOpen]);
 
@@ -49,6 +52,23 @@ const PLCModal: React.FC<Props> = ({ isOpen, onClose, onSuccess, initialData }) 
 
   const addTag = () => {
     setTags([...tags, { name: '', db: 1, offset: 0, type: 'REAL' }]);
+  };
+
+  const applyPreset = (presetTags: Omit<Tag, 'value'>[]) => {
+    const existingNames = new Set(tags.map(t => t.name));
+    const newTags = presetTags
+      .filter(t => !existingNames.has(t.name))
+      .map(t => ({ ...t }));
+
+    if (newTags.length === 0) {
+      setError('Wszystkie tagi z tego presetu są już dodane.');
+      return;
+    }
+
+    setTags([...tags, ...newTags]);
+    setShowPresets(false);
+    setSuccessMsg(`Dodano ${newTags.length} tagów z presetu.`);
+    setTimeout(() => setSuccessMsg(''), 3000);
   };
 
   const removeTag = (index: number) => {
@@ -268,12 +288,42 @@ const PLCModal: React.FC<Props> = ({ isOpen, onClose, onSuccess, initialData }) 
 
           {/* Tags Section */}
           <div className="space-y-6 pt-6 border-t border-gray-100">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <h3 className="text-lg font-bold text-gray-900">Tagi i Zmienne</h3>
                 <p className="text-sm text-gray-500 font-medium">Zdefiniuj adresy pamięci do odczytu</p>
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowPresets(!showPresets)}
+                    className="bg-purple-50 border border-purple-100 hover:bg-purple-100 text-purple-700 px-4 py-2 rounded-xl flex items-center gap-2 transition-all text-sm shadow-sm font-bold border-b-2 active:border-b-0 active:translate-y-0.5"
+                  >
+                    <Wand2 size={18} className="text-purple-600" />
+                    Presety
+                  </button>
+                  
+                  {showPresets && (
+                    <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 p-2 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                      <div className="px-3 py-2 border-b border-gray-50 mb-1">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Wybierz Preset Tagów</p>
+                      </div>
+                      {PLC_PRESETS.map((preset) => (
+                        <button
+                          key={preset.name}
+                          type="button"
+                          onClick={() => applyPreset(preset.tags)}
+                          className="w-full text-left p-3 hover:bg-slate-50 rounded-xl transition-colors group"
+                        >
+                          <p className="text-sm font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{preset.name}</p>
+                          <p className="text-[11px] text-gray-500 leading-relaxed mt-0.5">{preset.description}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <label htmlFor="csv-upload" className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-xl flex items-center gap-2 transition-all cursor-pointer text-sm shadow-sm font-bold border-b-2 active:border-b-0 active:translate-y-0.5">
                   <Upload size={18} className="text-blue-600" />
                   Importuj CSV

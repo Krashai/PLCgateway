@@ -40,6 +40,7 @@ class PLCWorker(threading.Thread):
 
     def run(self):
         """Główna pętla odczytu PLC."""
+        is_initial_sync = True
         while self.running:
             start_time = time.time()
             if self.connect():
@@ -50,25 +51,37 @@ class PLCWorker(threading.Thread):
                         dbs[tag.db].append(tag)
 
                     for db_num, tags in dbs.items():
+                        # Obliczamy potrzebny zakres odczytu (DINT/REAL zajmują 4 bajty)
                         max_offset = max(t.offset for t in tags) + 4
+                        # W przypadku STRING, musimy doliczyć max_length (Snap7 get_string czyta 256 bajtów domyślnie)
+                        if any(t.type.upper() == "STRING" for t in tags):
+                            max_offset = max(max_offset, 256 + max(t.offset for t in tags if t.type.upper() == "STRING"))
+
                         raw_data = self.client.db_read(db_num, 0, max_offset)
 
                         for tag in tags:
                             bit_val = getattr(tag, 'bit', 0)
                             val = decode_tag_value(raw_data, tag.offset, tag.type, bit_val)
+                            
                             if val is not None:
-                                # Mechanizm publish-on-change
-                                if val != self.last_values.get(tag.name):
+                                # Klucz cache'u uwzględniający DB i offset dla unikalności
+                                cache_key = f"{tag.db}.{tag.offset}.{tag.bit}"
+                                old_val = self.last_values.get(cache_key)
+                                
+                                # Mechanizm publish-on-change + synchronizacja startowa
+                                if val != old_val or is_initial_sync:
                                     tag.value = val
                                     self.publish_to_mqtt(tag)
-                                    self.last_values[tag.name] = val
+                                    self.last_values[cache_key] = val
                                 else:
                                     tag.value = val
                     
                     self.config.online = True
+                    is_initial_sync = False  # Synchronizacja zakończona po pierwszym pełnym przejściu
                 except Exception as e:
                     print(f"ERROR: Wyjątek podczas odczytu {self.config.ip}: {e}", flush=True)
                     self.config.online = False
+                    is_initial_sync = True # Przy resecie połączenia wymusimy ponowny sync
                     self.client.disconnect()
             
             # Informujemy WebSocket o aktualnym stanie całego sterownika
@@ -81,7 +94,7 @@ class PLCWorker(threading.Thread):
 
     def publish_to_mqtt(self, tag):
         topic = f"lines/{self.config.id}/{tag.name}"
-        self.mqtt_client.publish(topic, str(tag.value))
+        self.mqtt_client.publish(topic, str(tag.value), retain=True)
 
     def broadcast_update(self):
         """Wysyła stan sterownika przez WebSockets (bezpiecznie z wątku)."""
